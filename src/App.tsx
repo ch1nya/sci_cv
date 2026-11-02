@@ -1,363 +1,140 @@
-import React, { useState, useCallback } from 'react';
+import { useState } from 'react';
+import * as Accordion from '@radix-ui/react-accordion';
+import * as Dialog from '@radix-ui/react-dialog';
+import * as Tooltip from '@radix-ui/react-tooltip';
+import { ChevronDown, Copy, Menu, Moon, Sun, X } from 'lucide-react';
+import { Toaster, toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { content } from './content';
 
-// ── Helpers ──
-function assembleEmail(): string {
-  return content.email;
-}
+const navLinks = [
+  { href: '#research', label: 'Research' },
+  { href: '#background', label: 'Background' },
+  { href: '#faq', label: 'FAQ' },
+  { href: '#contact', label: 'Contact' },
+];
 
-function copyToClipboard(text: string, onSuccess: () => void): void {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(onSuccess, () => fallbackCopy(text, onSuccess));
-  } else {
-    fallbackCopy(text, onSuccess);
-  }
-}
-
-function fallbackCopy(text: string, onSuccess: () => void): void {
-  const textarea = document.createElement('textarea');
-  textarea.value = text;
-  textarea.style.position = 'fixed';
-  textarea.style.left = '-9999px';
-  document.body.appendChild(textarea);
-  textarea.select();
+async function copyEmail() {
   try {
-    document.execCommand('copy');
-    onSuccess();
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(content.email);
+    else {
+      const field = document.createElement('textarea');
+      field.value = content.email;
+      field.style.position = 'fixed';
+      field.style.opacity = '0';
+      document.body.append(field);
+      field.select();
+      if (!document.execCommand('copy')) throw new Error('Clipboard copy failed');
+      field.remove();
+    }
+    toast.success('Email copied');
   } catch {
-    /* ignore */
+    toast.error('Could not copy email');
   }
-  document.body.removeChild(textarea);
 }
 
-// ── Types ──
-type TabId = 'email' | 'cv' | 'proposal';
-
-interface Tab {
-  id: TabId;
-  label: string;
-  file: string | null;
+function ThemeToggle() {
+  const [dark, setDark] = useState(document.documentElement.dataset.theme === 'dark');
+  const toggle = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.dataset.theme = next ? 'dark' : 'light';
+    localStorage.setItem('theme', next ? 'dark' : 'light');
+  };
+  return <Tooltip.Provider delayDuration={250}><Tooltip.Root><Tooltip.Trigger asChild>
+    <Button variant="ghost" className="icon-button" onClick={toggle} aria-label={`Switch to ${dark ? 'light' : 'dark'} mode`}><span aria-hidden="true">{dark ? <Sun size={17} /> : <Moon size={17} />}</span></Button>
+  </Tooltip.Trigger><Tooltip.Portal><Tooltip.Content className="tooltip" sideOffset={6}>{dark ? 'Light theme' : 'Dark theme'}<Tooltip.Arrow className="tooltip-arrow" /></Tooltip.Content></Tooltip.Portal></Tooltip.Root></Tooltip.Provider>;
 }
 
-// ── Components ──
-const Wordmark: React.FC = () => (
-  <a href="#main" className="wordmark">
-    Ivan Chiniakin
-  </a>
-);
-
-const NavLink: React.FC<{ href: string; children: React.ReactNode }> = ({ href, children }) => (
-  <a href={href} className="nav-link">
-    {children}
-  </a>
-);
-
-interface HeaderProps {
+function Header() {
+  return <header className="site-header"><div className="container header-inner">
+    <a className="wordmark" href="#main">Ivan Chiniakin</a>
+    <nav className="desktop-nav" aria-label="Main navigation">{navLinks.map((link) => <a key={link.href} href={link.href}>{link.label}</a>)}</nav>
+    <div className="header-actions"><ThemeToggle />
+      <Dialog.Root><Dialog.Trigger asChild><Button variant="ghost" className="icon-button mobile-menu-trigger" aria-label="Open menu"><Menu size={19} /></Button></Dialog.Trigger>
+        <Dialog.Portal><Dialog.Overlay className="sheet-overlay" /><Dialog.Content className="sheet-content">
+          <div className="sheet-heading"><Dialog.Title>Navigation</Dialog.Title><Dialog.Close asChild><Button variant="ghost" className="icon-button" aria-label="Close menu"><X size={18} /></Button></Dialog.Close></div>
+          <nav aria-label="Mobile navigation" className="mobile-nav">{navLinks.map((link) => <Dialog.Close asChild key={link.href}><a href={link.href}>{link.label}</a></Dialog.Close>)}</nav>
+        </Dialog.Content></Dialog.Portal>
+      </Dialog.Root>
+    </div>
+  </div></header>;
 }
 
-const Header: React.FC<HeaderProps> = () => {
-  const [menuOpen, setMenuOpen] = useState(false);
+function EmailActions() {
+  return <div className="hero-actions"><a href={`mailto:${content.email}`} className="button button--primary">Write an email</a>
+    <Button onClick={copyEmail}><Copy size={15} /> Copy email</Button>
+    {content.cv && <a href={content.cv} className="button button--ghost" download>Download CV</a>}
+  </div>;
+}
 
-  const navLinks = [
-    { href: '#research', label: 'Research' },
-    { href: '#background', label: 'Background' },
-    { href: '#faq', label: 'FAQ' },
-    { href: '#contact', label: 'Contact' },
-    ...(content.cv ? [{ href: '#contact', label: 'CV' }] : []),
-  ] as const;
-
-  return (
-    <header className="header">
-      <div className="container header-inner">
-        <Wordmark />
-        <nav className="nav">
-          {navLinks.map((link) => (
-            <NavLink key={link.href} href={link.href}>
-              {link.label}
-            </NavLink>
-          ))}
-          <button
-            className="nav-toggle"
-            aria-label="Toggle menu"
-            aria-expanded={menuOpen}
-            aria-controls="mobile-nav"
-            onClick={() => setMenuOpen((prev) => !prev)}
-          >
-            {menuOpen ? '✕' : '☰'}
-          </button>
-          <div className={`nav-menu${menuOpen ? ' active' : ''}`} id="mobile-nav">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="nav-menu__link"
-                onClick={() => setMenuOpen(false)}
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
-        </nav>
-      </div>
-    </header>
-  );
-};
-
-const Eyebrow: React.FC = () => (
-  <p className="eyebrow">{content.eyebrow}</p>
-);
-
-const Subtitle: React.FC = () => <p>{content.subtitle}</p>;
-
-const ContactBlock: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabId>('email');
-  const [copied, setCopied] = useState(false);
-
-  const tabs: Tab[] = ([
-    { id: 'email', label: 'email', file: null },
-    { id: 'cv', label: 'CV', file: content.cv },
-    { id: 'proposal', label: 'proposal', file: content.proposal },
-  ] as unknown as Tab[])
-    .filter((tab: Tab) => tab.file !== null);
-
-  const handleCopy = useCallback(() => {
-    copyToClipboard(assembleEmail(), () => setCopied(true));
-    setTimeout(() => setCopied(false), 2000);
-  }, []);
-
-  const renderEmail = () => (
-    <>
-      <span aria-live="polite">
-        {copied ? 'Copied' : <code>{assembleEmail()}</code>}
-      </span>
-      <button
-        className="code-block__copy"
-        onClick={handleCopy}
-        aria-label="Copy email"
-      >
-        {copied ? '✓' : 'copy'}
-      </button>
-    </>
-  );
-
-  const renderCV = () => (
-    <a href={content.cv!} download>
-      Download CV
-    </a>
-  );
-
-  const renderProposal = () => (
-    <a href={content.proposal!} download>
-      Download proposal PDF
-    </a>
-  );
-
-  return (
-    <div className="contact-tabs" role="tablist" aria-label="Contact options">
-      {tabs.map((tab: Tab) => (
-        <button
-          key={tab.id}
-          role="tab"
-          aria-selected={activeTab === tab.id}
-          onClick={() => setActiveTab(tab.id)}
-        >
-          {tab.label}
-        </button>
-      ))}
-      <div className="contact-tab-content">
-        {activeTab === 'email' && renderEmail()}
-        {activeTab === 'cv' && renderCV()}
-        {activeTab === 'proposal' && renderProposal()}
-      </div>
+function Hero() {
+  return <section className="hero content-column" aria-labelledby="hero-title">
+    <div className="hero-main">
+      <Badge><span className="status-dot" />{content.status}</Badge>
+      <h1 id="hero-title">{content.h1}</h1>
+      <p className="hero-subtitle">{content.subtitle}</p>
+      {content.portrait && <img className="hero-portrait" src={`${import.meta.env.BASE_URL}${content.portrait}`} alt="Ivan Chiniakin" width="136" height="136" />}
     </div>
-  );
-};
+    <EmailActions />
+  </section>;
+}
 
-const Hero: React.FC = () => {
-  return (
-    <section className="hero">
-      <Eyebrow />
-      <div className="hero-body">
-        <h1>{content.h1}</h1>
-        <Subtitle />
-      </div>
-      <ContactBlock />
-      <div className="hero-actions">
-        <a href={`mailto:${content.email}`} className="button primary">
-          Write an email
-        </a>
-        {content.cv && content.cv && (
-          <a href={content.cv} className="button" download>
-            Download CV
-          </a>
-        )}
-      </div>
-    </section>
-  );
-};
+function SectionHeading({ number, title }: { number: string; title: string }) {
+  return <div className="section-heading"><span className="section-number">{number}</span><h2>{title}</h2></div>;
+}
 
-const ResearchPoint: React.FC<{ point: { name: string; description: string } }> = ({ point }) => (
-  <li>
-    <strong>{point.name}</strong> {point.description}
-  </li>
-);
+function Research() {
+  return <section id="research" className="section content-column"><SectionHeading number="01" title="Research" />
+    <p className="lead">{content.researchIntro}</p>
+    <ol className="research-list">{content.researchPoints.map((point, index) => <li key={point.name}>
+      <span className="research-index">{String(index + 1).padStart(2, '0')}</span><div><h3>{point.name.replace(/\.$/, '')}</h3><p>{point.description}</p></div>
+    </li>)}</ol>
+    <Card className="metadata-card"><p className="card-kicker">PROJECT NOTES</p><dl>{Object.entries(content.projectCard).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></Card>
+    {content.proposal && <a href={content.proposal} className="text-link" download>View proposal PDF <span aria-hidden="true">↗</span></a>}
+  </section>;
+}
 
-const ProjectCard: React.FC = () => (
-  <pre className="code-block">
-    <code>
-      {Object.entries(content.projectCard)
-        .map(([key, value]) => `  ${key}  = "${value}"`)
-        .join('\n')}
-    </code>
-  </pre>
-);
+function Figures() {
+  return <section className="section figures-section" aria-label="At a glance"><div className="container"><div className="figures-grid">
+    {content.stats.map((stat, index) => <Card className="figure-card" key={stat.label}><span className="figure-caption">Fig. {index + 1}</span><strong>{stat.number}</strong><p>{stat.label}</p></Card>)}
+  </div></div></section>;
+}
 
-const Stats: React.FC = () => (
-  <div className="stats">
-    {content.stats.map((stat, index) => (
-      <div key={index} className="stat">
-        <span className="stat__number">Fig. {index + 1}.</span>
-        <span className="stat__number">{stat.number}</span>
-        <span className="stat__label">{stat.label}</span>
-      </div>
-    ))}
-  </div>
-);
+function Background() {
+  return <section id="background" className="section content-column"><SectionHeading number="02" title="Background" />
+    <div className="background-group"><h3>Education</h3><ul className="record-list">{content.education.filter((item) => item.degree).map((edu, index) => <li key={edu.degree} className="record-item"><div className="record-row"><div><strong>{edu.degree}</strong>{edu.university && <span>{edu.university}</span>}</div>{edu.year && <time>{edu.year}</time>}</div>{index < content.education.length - 1 && <Separator />}</li>)}</ul></div>
+    <div className="background-group"><h3>Industry</h3><ul className="record-list">{content.industry.map((item, index) => <li key={item.role} className="record-item"><div className="record-row"><div><strong>{item.role.trim()}{item.years.trim() ? `, ${item.years.trim()}` : ''}</strong>{item.stack && <span>{item.stack}</span>}</div>{item.employer && <span className="record-meta">{item.employer}</span>}</div>{index < content.industry.length - 1 && <Separator />}</li>)}</ul></div>
+    <div className="background-group prior-research"><h3>Prior research</h3><p>{content.priorResearch}</p></div>
+    <p className="background-note">{content.backgroundLine}</p>
+  </section>;
+}
 
-const BackgroundSection: React.FC = () => {
-  const education = content.education.map((edu, index) => (
-    <li key={index}>
-      <div className="item-header">
-        <div>
-          <strong>{edu.degree}</strong>
-          {edu.university && <span>, {edu.university}</span>}
-          <span className="text-muted">{edu.year}</span>
-        </div>
-      </div>
-    </li>
-  ));
+function Faq() {
+  return <section id="faq" className="section content-column"><SectionHeading number="03" title="Frequently asked questions" />
+    <Accordion.Root className="accordion" type="single" collapsible defaultValue="item-0">{content.faqs.map((faq, index) => <Accordion.Item value={`item-${index}`} key={faq.question} className="accordion-item">
+      <Accordion.Header><Accordion.Trigger className="accordion-trigger">{faq.question}<ChevronDown size={17} className="accordion-chevron" /></Accordion.Trigger></Accordion.Header>
+      <Accordion.Content className="accordion-content"><p>{faq.answer}</p></Accordion.Content>
+    </Accordion.Item>)}</Accordion.Root>
+  </section>;
+}
 
-  const industry = content.industry.map((item, index) => (
-    <li key={index}>
-      <div className="item-header">
-        <div>
-          <strong>{item.role}</strong> {item.years && <span>, {item.years}</span>}
-          {item.stack && <span> — {item.stack}</span>}
-        </div>
-        {item.employer && <span className="text-muted">{item.employer}</span>}
-      </div>
-    </li>
-  ));
+function Contact() {
+  return <section id="contact" className="section contact-section"><div className="container contact-inner"><div><SectionHeading number="04" title="Contact" /><p className="contact-copy">For questions about the project, supervision, or possible fit, please get in touch.</p></div>
+    <Card className="contact-card"><a className="email-address" href={`mailto:${content.email}`}>{content.email}</a><Button onClick={copyEmail}><Copy size={15} /> Copy email</Button></Card>
+    <div className="social-links">{content.social.map((social) => <a key={social.name} href={social.url} target="_blank" rel="noreferrer">{social.name}<span aria-hidden="true">↗</span></a>)}</div>
+  </div></section>;
+}
 
-  return (
-    <section className="background-section" id="background">
-      <h2>Background</h2>
-      <div className="background-section">
-        <div className="section-block">
-          <h3>Education</h3>
-          <ul>{education}</ul>
-        </div>
-        <div className="section-block">
-          <h3>Industry</h3>
-          <ul>{industry}</ul>
-        </div>
-      </div>
-      <h3>Prior research</h3>
-      <p>{content.priorResearch}</p>
-      <p className="text-muted">{content.backgroundLine}</p>
-    </section>
-  );
-};
+function Footer() {
+  return <footer className="site-footer"><div className="container footer-inner"><span>© {new Date().getFullYear()} Ivan Chiniakin</span><span>Last updated: 2 November 2026</span><a href="#main">Back to top ↑</a></div></footer>;
+}
 
-const FaqItem: React.FC<{ faq: { question: string; answer: string } }> = ({ faq }) => (
-  <details>
-    <summary>{faq.question}</summary>
-    <p>{faq.answer}</p>
-  </details>
-);
-
-const Faq: React.FC = () => (
-  <section className="faq-section" id="faq">
-    <h2>FAQ</h2>
-    {content.faqs.map((faq, index) => (
-      <FaqItem key={index} faq={faq} />
-    ))}
-  </section>
-);
-
-const Contact: React.FC = () => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = useCallback(() => {
-    copyToClipboard(content.email, () => setCopied(true));
-    setTimeout(() => setCopied(false), 2000);
-  }, []);
-
-  return (
-    <section className="contact-section" id="contact">
-      <h2>Contact</h2>
-      <div className="email-block">
-        <code>{assembleEmail()}</code>
-        <button className="code-block__copy" onClick={handleCopy} aria-label="Copy email">
-          {copied ? '✓' : '📋 copy'}
-        </button>
-      </div>
-      <noscript>
-        <p>chiniakinivan [at] gmail.com</p>
-      </noscript>
-      {content.social.length > 0 && (
-        <div className="social-links">
-          {content.social.map((social) => (
-            <a key={social.name} href={social.url}>
-              {social.name}
-            </a>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-};
-
-const Footer: React.FC = () => (
-  <footer className="footer">
-    <p>&copy; {new Date().getFullYear()} Ivan Chiniakin</p>
-    <p>Last updated: {new Date().toISOString().split('T')[0]}</p>
-    <div className="footer__links">
-      <a href="https://github.com/ch1nya/sci_cv">Source</a>
-      <a href="#main">Back to top</a>
-    </div>
-  </footer>
-);
-
-const App: React.FC = () => {
-  return (
-    <div className="page">
-      <Header />
-      <main>
-        <Hero />
-        <section className="research" id="research">
-          <h2>Research</h2>
-          <p>{content.researchIntro}</p>
-          <ul>
-            {content.researchPoints.map((point, index) => (
-              <ResearchPoint key={index} point={point} />
-            ))}
-          </ul>
-          <ProjectCard />
-          {content.proposal && content.proposal && (
-            <a href={content.proposal!} className="button" download>
-              View proposal PDF
-            </a>
-          )}
-        </section>
-        <Stats />
-        <BackgroundSection />
-        <Faq />
-        <Contact />
-      </main>
-      <Footer />
-    </div>
-  );
-};
-
-export default App;
+export default function App() {
+  return <Tooltip.Provider><div className="page"><Header /><main id="main" className="container">
+    <Hero /><Research /><Figures /><Background /><Faq />
+  </main><Contact /><Footer /><Toaster position="bottom-right" richColors closeButton /></div></Tooltip.Provider>;
+}

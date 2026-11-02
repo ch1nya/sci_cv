@@ -34,7 +34,7 @@ export type Content = {
   education: Array<{
     degree: string;
     university: string | null;
-    year: string;
+    year: string | null;
   }>;
   industry: Array<{
     role: string;
@@ -49,8 +49,8 @@ export type Content = {
   faqs: Array<{ question: string; answer: string }>;
 
   // Contact
-  email: string; // assemble in JS from parts
-  social: SocialLink[]; // all null for now (hide)
+  email: string;
+  social: SocialLink[];
 
   // Optional assets — hide when absent
   portrait: string | null; // public/portrait.jpg
@@ -86,7 +86,7 @@ export const content: Content = {
 
   // Stats (Fig. 1–3)
   stats: [
-    { number: '5', label: 'years in industry as a front-end developer' },
+    { number: '5+', label: 'years of experience building production-grade React applications' },
     { number: '2', label: 'degrees: International Relations (BA), Business Management (Master’s, 2024)' },
     { number: '3', label: 'jurisdictions in the planned comparison: China, EU, US' },
   ],
@@ -99,16 +99,16 @@ export const content: Content = {
       year: '2024',
     },
     {
-      degree: "Bachelor's in International Relations",
-      university: '[EMPTY]', // unknown from working CV
-      year: '(BA)',
+      degree: "Bachelor's in International Relations (BA)",
+      university: null, // TODO: confirm the bachelor's institution before adding it.
+      year: null,
     },
   ],
   industry: [
     {
-      role: 'Front-end developer',
-      years: '5 years',
-      stack: 'React, TypeScript',
+      role: 'Senior Frontend Engineer',
+      years: '5+ years',
+      stack: 'React, TypeScript, JavaScript, Next.js, Redux, MobX, React Query, GraphQL, WebSockets, micro-frontends, Tailwind CSS, Docker, LLM APIs',
       employer: 'Sixhands Ltd.', // from working CV
     },
     {
@@ -155,7 +155,7 @@ export const content: Content = {
   ],
 
   // Optional assets — hide when absent
-  portrait: null, // public/portrait.jpg
+  portrait: 'portrait.png',
   cv: null, // cv.pdf
   proposal: null, // proposal.pdf
 };

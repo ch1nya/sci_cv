@@ -34,11 +34,9 @@ describe('App rendering', () => {
     }
   });
 
-  it('hides tabs when file is null', () => {
+  it('renders the GitHub profile portrait and hides absent downloadable files', () => {
     const { container } = render(<App />);
-    const tabs = container.querySelectorAll('.contact-tabs button');
-    // All tabs should be hidden because all files are null
-    // (the default email tab should be visible, others should not appear)
-    expect(tabs.length).toBeGreaterThan(0);
+    expect(container.querySelector('.hero-portrait')?.getAttribute('src')).toMatch(/\/portrait\.png$/);
+    expect(container.querySelector('a[download]')).toBeNull();
   });
 });

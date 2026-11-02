@@ -1,72 +1,39 @@
 # sci-cv
 
-A one-page academic business card for Ivan Chiniakin — PhD applicant, 2027 intake.
-Static, minimal, designed to be read in ~30 seconds.
+An academic profile and research page for Ivan Chiniakin, PhD applicant for the 2027 intake. Built with React, TypeScript, Vite, Tailwind CSS v4, and shadcn/ui-style components with Radix primitives.
 
-## Preview
+## Development
 
-- Dev server: `npm run dev`
-- Production preview: `npm run build && npm run preview`
-
-## Project structure
-
-```
-sci_cv/
-├── public/
-│   └── .nojekyll          # GitHub Pages: disable Jekyll processing
-├── src/
-│   ├── main.tsx           # Entry point
-│   ├── App.tsx            # Root component
-│   ├── content.ts         # All copy + links (source of truth)
-│   ├── styles/
-│   │   └── global.css     # Design system (CSS variables, tokens)
-│   ├── components/        # Dumb presentational components
-│   └── test-setup.ts      # Vitest + jest-dom setup
-├── .github/workflows/
-│   └── deploy.yml         # CI/CD: build + deploy to GitHub Pages
-├── index.html
-├── vite.config.ts
-└── tsconfig.json
+```sh
+npm install
+npm run dev
 ```
 
-## Content editing
+Production build and preview:
 
-All copy, links, avatar, CV, and proposal are in `src/content.ts`.
-Components are dumb and render from it. Unknown values are `null` — the UI
-hides those elements completely. No `TODO`, `null`, `undefined` or `lorem`
-should appear in production.
+```sh
+npm run build
+npm run preview
+```
 
-## Adding assets
+Quality checks:
 
-- **Avatar**: `public/portrait.jpg` (square, 1px border, radius 4px, max 160px)
-- **CV**: `public/cv.pdf`
-- **Proposal**: `public/proposal.pdf`
+```sh
+npm run lint
+npm run typecheck
+npm test
+```
 
-Add the file and set the corresponding property to a string path in
-`content.ts`. If the file is absent or the property is `null`, the UI hides
-the element.
+## Content and assets
+
+Copy and links are maintained in `src/content.ts`. Unknown optional data stays `null` and is not rendered. `CONTENT_TODO.md` tracks details and assets that still need owner input. Add optional files under `public/` and set their paths in the content file.
+
+## UI setup
+
+`components.json` configures the shadcn/ui component aliases and CSS-variable theming. The project uses the Tailwind v4 Vite plugin and the `@` alias for `src/`. The small set of UI components lives in `src/components/ui/`; Radix UI supplies accessible Accordion, Dialog/Sheet, and Tooltip primitives.
+
+Theme variables are defined in `src/styles/global.css`. The page starts in light mode, follows the system preference before a user choice, and remembers explicit theme selection.
 
 ## Deployment
 
-1. Push to `main` branch — GitHub Actions builds and deploys automatically.
-2. GitHub repo Settings → Pages → Source: "GitHub Actions".
-3. Custom domain: add `public/CNAME` (requires setting `CNAME` in `content.ts`).
-
-## Design tokens
-
-- Warm near-monochrome palette
-- Accent colour `#034CFF` (links, focus rings, primary button)
-- IBM Plex Mono for headings, body, code
-- 1px borders, radius 4px (max 6px), no shadows
-- 4px base spacing scale: 4/8/12/16/24/32/48/64/96
-- Material: flat, 1px borders, radius 4px (max 6px), no shadows, no gradients
-
-## Quality gates
-
-- `npm run lint` — ESLint with zero warnings
-- `npm run build` — production build succeeds
-- `npm test` — Vitest all pass (5 tests)
-- `npm run typecheck` — `tsc --noEmit` clean
-- Transfer budget: HTML + JS + CSS ≤ 150 kB gzipped
-- Screenshots at 375, 768, 1280 px in light and dark saved to `docs/screenshots/`
-vite base fix
+The Vite base path remains `/sci_cv/` for GitHub Pages (overridable through `VITE_BASE`). The existing GitHub Actions workflow deploys builds from `main`.
