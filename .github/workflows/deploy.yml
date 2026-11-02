@@ -41,7 +41,7 @@ jobs:
 
       - name: Build
         run: |
-          if [[ "${{ github.repository }}" == *".github.io"* ]]; then
+          if [[ "${{ github.repository }}" == *.github.io ]]; then
             VITE_BASE=/ npm run build
           else
             VITE_BASE=/${{ github.repository }}/ npm run build
