@@ -5,13 +5,15 @@
 @import url('@fontsource/ibm-plex-mono/latin-700.css');
 
 :root {
-  --bg: #fdfc fc;
-  --bg-elevated: #f8f7 f7;
+  --bg: #fdfcfc;
+
+
+  --bg-elevated: #f8f7f7;
   --text: #211e1e;
   --muted: #6e6b6b;
   --border: #d8d5d5;
   --accent: #034cff;
-  --code-bg: #f1ef ef;
+  --code-bg: #f1efef;
   --success: #12c905;
   --warning: #fcd53a;
   --danger: #fc533a;
@@ -55,7 +57,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
