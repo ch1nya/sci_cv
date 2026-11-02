@@ -44,7 +44,7 @@ jobs:
           if [[ "${{ github.repository }}" == *.github.io ]]; then
             VITE_BASE=/ npm run build
           else
-            VITE_BASE=/${{ github.repository#*/ }}/ npm run build
+            VITE_BASE=/${{ github.event.repository.name }}/ npm run build
           fi
 
       - name: Setup Pages
