@@ -69,3 +69,4 @@ the element.
 - `npm run typecheck` — `tsc --noEmit` clean
 - Transfer budget: HTML + JS + CSS ≤ 150 kB gzipped
 - Screenshots at 375, 768, 1280 px in light and dark saved to `docs/screenshots/`
+vite base fix
