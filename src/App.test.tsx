@@ -36,7 +36,7 @@ describe('App rendering', () => {
 
   it('renders the GitHub profile portrait and hides absent downloadable files', () => {
     const { container } = render(<App />);
-    expect(container.querySelector('.hero-portrait')?.getAttribute('src')).toMatch(/\/portrait\.png$/);
+    expect(container.querySelector('.portrait')?.getAttribute('src')).toMatch(/\/portrait\.png$/);
     expect(container.querySelector('a[download]')).toBeNull();
   });
 });
